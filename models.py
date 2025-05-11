@@ -8,35 +8,29 @@ import matplotlib.pyplot as plt
 
 
 class VoterModel(Model):
-    def __init__(self, num_agents=100, group_size=5):
+    def __init__(self, num_agents=100, initial_ratio=0.5):
         super().__init__()
         self.num_agents = num_agents
-        self.group_size = group_size
-
-        # Pełny graf: każdy z każdym
-        self.G = nx.complete_graph(n=num_agents)
+        self.G = nx.complete_graph(n=num_agents)  # pełny graf
         self.grid = NetworkGrid(self.G)
 
-        # DataCollector do zbierania danych
-        self.datacollector = DataCollector(agent_reporters={"Opinion": "opinion"})
+        self.datacollector = DataCollector(
+            agent_reporters={"Opinion": "opinion"}
+        )
 
-        for i, node in enumerate(self.G.nodes()):
-            opinion = random.choice([-1, 1])
+        # Przygotuj opinie zgodnie z parametrem initial_ratio
+        num_positive = int(initial_ratio * num_agents)
+        opinions = [1] * num_positive + [-1] * (num_agents - num_positive)
+        self.random.shuffle(opinions)
+
+        for node, opinion in zip(self.G.nodes(), opinions):
             agent = VoterAgent(self, opinion)
             self.agents.add(agent)
             self.grid.place_agent(agent, node)
 
     def step(self):
-        # Majority Rule
-        group = random.sample(list(self.agents), self.group_size)
-        opinions = [agent.opinion for agent in group]
-        majority_opinion = 1 if opinions.count(1) > opinions.count(-1) else -1
-
-        for agent in group:
-            agent.opinion = majority_opinion
-
+        self.agents.do("step")
         self.datacollector.collect(self)
-
         if self.is_stable():
             print("Symulacja osiągnęła stabilność.")
             self.running = False
