@@ -3,8 +3,8 @@ from matplotlib.animation import FuncAnimation
 from models import VoterModel
 
 # Tworzenie modelu
-model = VoterModel(num_agents=100)
-num_steps = 50
+model = VoterModel(num_agents=200)
+num_steps = 250
 
 # Historia opinii
 history_pos = []
