@@ -1,24 +1,26 @@
-from mesa import Model
-from mesa.space import NetworkGrid
 from mesa.datacollection import DataCollector
+from mesa.space import NetworkGrid
+from models.BaseModel import BaseModel
+from mesa import Model
+from mesa import Agent
 import networkx as nx
 import random
-from agents import MajorityRuleAgent
-import matplotlib.pyplot as plt
-import abc
 
 
-class BaseModel(abc.ABC):
+class MajorityRuleAgent(Agent):
 
-    @abc.abstractmethod
+    def __init__(self, model, opinion):
+
+        super().__init__(model)
+        self.opinion = opinion
+
+
     def step(self):
         pass
 
-    @abc.abstractmethod
-    def is_stable(self):
-        pass
 
 class MajorityVoteModel(Model, BaseModel):
+
     def __init__(self, num_agents=200, initial_ratio=0.5, group_size=5):
         Model.__init__(self)
         self.num_agents = num_agents
@@ -28,10 +30,11 @@ class MajorityVoteModel(Model, BaseModel):
         self.datacollector = DataCollector(
             agent_reporters={"Opinion": "opinion"}
         )
+        self.initial_ratio = initial_ratio
 
         # Przygotuj opinie zgodnie z parametrem initial_ratio
-        num_positive = int(initial_ratio * num_agents)
-        opinions = [1] * num_positive + [-1] * (num_agents - num_positive)
+        num_positive = int(self.initial_ratio * self.num_agents)
+        opinions = [1] * num_positive + [-1] * (self.num_agents - num_positive)
         self.random.shuffle(opinions)
 
         for node, opinion in zip(self.G.nodes(), opinions):
@@ -50,25 +53,10 @@ class MajorityVoteModel(Model, BaseModel):
 
         self.datacollector.collect(self)
 
-        if self.is_stable():
+        if self.is_unanimous():
             print("Symulacja osiągnęła stabilność.")
             self.running = False
 
-    def is_stable(self):
+    def is_unanimous(self):
         opinions = [agent.opinion for agent in self.agents]
         return len(set(opinions)) == 1
-
-
-class QVoteModel(Model, BaseModel):
-
-    def __init__(self):
-        # TODO: Implement QVoteModel
-        pass
-
-    def step(self):
-        # TODO: Implement the step method for QVoteModel
-        pass
-
-    def is_stable(self):
-        # TODO: Implement the is_stable method for QVoteModel
-        pass
